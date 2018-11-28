@@ -41,7 +41,7 @@ class StethoInitializer : ProviderInitializer() {
 
 ## Using an initializer
 
-```
+```kotlin
 val InitializeStetho by lazy {
     ApplicationProvider.listen { application ->
         Stetho.initializeWithDefaults(application)
