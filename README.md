@@ -1,11 +1,13 @@
 # ApplicationProvider
 
-Retrieve the android application from anywhere
+# Retrieve the android application from anywhere
 Useful to develop a standalone library
 
 ```
 val application = ApplicationProvider.application
 ```
+
+# Initialize classes that needs a context
 
 You do not need to override the Application now
 
