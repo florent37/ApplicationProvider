@@ -3,7 +3,8 @@
 # Retrieve the android application from anywhere
 Useful to develop a standalone library
 
-```
+```kotlin
+//from anywhere
 val application = ApplicationProvider.application
 ```
 
