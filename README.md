@@ -1,6 +1,7 @@
 # ApplicationProvider
 
 Retrieve the android application from anywhere
+Useful to develop a standalone library
 
 ```
 val application = ApplicationProvider.application
@@ -21,6 +22,8 @@ class MyApplication : Application() {
 # After
 
 ## Using a provider
+
+*Note that you can include it directly on your library's aar*
 
 ```kotlin
 class StethoInitializer : ProviderInitializer() {
