@@ -29,7 +29,7 @@ class MyApplication : Application() {
 
 # After
 
-## Using a provider
+## Using a provider (for libraries)
 
 *Note that you can include it directly on your library's aar*
 
