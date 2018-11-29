@@ -8,6 +8,11 @@ Useful to develop a standalone library
 val application = ApplicationProvider.application
 ```
 
+```kotlin
+//from anywhere
+val currentActivity = ActivityProvider.currentActivity
+```
+
 # Initialize classes that needs a context
 
 You do not need to override the Application now
