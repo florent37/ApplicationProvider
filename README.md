@@ -8,6 +8,7 @@ Useful to develop a standalone library
 val application = ApplicationProvider.application
 ```
 
+# Retrieve the current activity from anywhere
 ```kotlin
 //from anywhere
 val currentActivity = ActivityProvider.currentActivity
