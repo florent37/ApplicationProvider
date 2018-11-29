@@ -9,5 +9,12 @@
             android:exported="false"
             android:initOrder="900"
             tools:ignore="UnusedAttribute"/>
+        <provider
+            android:name=".LastActivityProvider"
+            android:authorities="${applicationId}.florent37.lastactivityprovider"
+            android:directBootAware="true"
+            android:exported="false"
+            android:initOrder="900"
+            tools:ignore="UnusedAttribute"/>
     </application>
 </manifest>

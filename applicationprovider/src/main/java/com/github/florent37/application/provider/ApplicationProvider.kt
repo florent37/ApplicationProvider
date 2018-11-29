@@ -63,43 +63,12 @@ private fun initAndGetAppCtxWithReflection(): Application? {
     return null
 }
 
-class AppContextProvider : ContentProvider() {
+class AppContextProvider : EmptyProvider() {
     override fun onCreate(): Boolean {
         val ctx = context
         if (ctx is Application) {
             _appliation = ctx
         }
         return true
-    }
-
-    override fun insert(uri: Uri, values: ContentValues?): Uri {
-        throw Exception("unimplemented")
-    }
-
-    override fun query(
-        uri: Uri,
-        projection: Array<out String>?,
-        selection: String?,
-        selectionArgs: Array<out String>?,
-        sortOrder: String?
-    ): Cursor {
-        throw Exception("unimplemented")
-    }
-
-    override fun update(
-        uri: Uri,
-        values: ContentValues?,
-        selection: String?,
-        selectionArgs: Array<out String>?
-    ): Int {
-        throw Exception("unimplemented")
-    }
-
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
-        throw Exception("unimplemented")
-    }
-
-    override fun getType(uri: Uri): String {
-        throw Exception("unimplemented")
     }
 }
