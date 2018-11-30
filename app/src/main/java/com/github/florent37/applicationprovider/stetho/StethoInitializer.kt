@@ -1,5 +1,6 @@
 package com.github.florent37.applicationprovider.stetho
 
+import android.app.Application
 import com.facebook.stetho.Stetho
 import com.github.florent37.application.provider.ApplicationProvider
 

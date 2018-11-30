@@ -2,17 +2,51 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion project.COMPILE_SDK
+
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 28
+        minSdkVersion project.MIN_SDK
+        targetSdkVersion project.TARGET_SDK
         versionCode 1
         versionName "1.0"
     }
 
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'applicationprovider'
+    orgName = 'florent37'
+
+    publishedGroupId = 'com.github.florent37'
+    libraryName = 'ApplicationProvider'
+    artifact = 'applicationprovider'
+
+    libraryDescription = 'ApplicationProvider'
+
+    siteUrl = 'https://github.com/florent37/ApplicationProvider'
+    gitUrl = 'https://github.com/florent37/ApplicationProvider.git'
+
+    libraryVersion = rootProject.ext.libraryVersion
+
+    developerId = 'florent37'
+    developerName = 'florent37'
+    developerEmail = 'champigny.florent@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+
+apply from: rootProject.file('gradle/install-v1.gradle')
+apply from: rootProject.file('gradle/bintray-android-v1.gradle')
