@@ -81,3 +81,28 @@ class MainActivity : AppCompatActivity() {
 ```
 
 ## Access current activity
+
+Access current activity from anywhere using 
+
+```
+val currentActivity : Activity? = ActivityProvider.currentActivity()
+```
+
+Or safety from a kotlin coroutine context : 
+
+```kotlin
+launch {
+    val currentActivity = ActivityProvider.activity() //cannot be null
+    Log.d(TAG, "activity : $currentActivity")
+}
+```
+
+## Listen for current activity
+
+```kotlin
+launch {
+    ActivityProvider.listenCurrentActivity().collect {
+        Log.d(TAG, "activity : $currentActivity")
+    }
+}
+```
