@@ -23,6 +23,16 @@ launch {
 }
 ```
 
+## Listen for current activity
+
+```kotlin
+launch {
+    ActivityProvider.listenCurrentActivity().collect {
+        Log.d(TAG, "activity : $currentActivity")
+    }
+}
+```
+
 # Providers
 
 If you need to execute a code automatically when the application starts, without adding it into your application's class code
@@ -108,25 +118,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
     ...
-    }
-}
-```
-
-## Access current activity
-
-Access current activity from anywhere using 
-
-```
-val currentActivity : Activity? = ActivityProvider.currentActivity()
-```
-
-
-## Listen for current activity
-
-```kotlin
-launch {
-    ActivityProvider.listenCurrentActivity().collect {
-        Log.d(TAG, "activity : $currentActivity")
     }
 }
 ```
