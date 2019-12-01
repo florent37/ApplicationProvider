@@ -46,6 +46,15 @@ class MyApplication : Application() {
 *Note that you can include it directly on your library's aar*
 
 ```kotlin
+class StethoInitializer : Provider() {
+    override fun provide() {
+        val application = ApplicationProvider.application
+        Stetho.initializeWithDefaults(application)
+    }
+}
+
+//or with an ProviderInitializer :
+
 class StethoInitializer : ProviderInitializer() {
     override fun initialize(): (Application) -> Unit = {
         Stetho.initializeWithDefaults(application)
@@ -60,6 +69,8 @@ class StethoInitializer : ProviderInitializer() {
 ```
 
 ## Using an initializer
+
+Another way using Initializer
 
 ```kotlin
 val InitializeStetho by lazy {

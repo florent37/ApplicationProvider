@@ -5,6 +5,16 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 
+abstract class Provider : EmptyProvider(){
+
+    abstract fun provide();
+
+    override fun onCreate(): Boolean {
+        provide()
+        return true
+    }
+}
+
 abstract class EmptyProvider : ContentProvider(){
     override fun insert(uri: Uri, values: ContentValues?): Uri {
         throw Exception("unimplemented")
