@@ -3,6 +3,11 @@ package com.github.florent37.application.provider
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -70,7 +75,7 @@ object ActivityProvider {
     }
 
     internal fun pingResumedListeners(activity: Activity) {
-        _currentActivity = WeakReference(activity)
+        offerIfDiffer(activity)
         activityResumedListeners.forEach {
             it.onActivityResumed(activity)
         }
@@ -83,7 +88,7 @@ object ActivityProvider {
     }
 
     internal fun pingCreatedListeners(activity: Activity) {
-        _currentActivity = WeakReference(activity)
+        offerIfDiffer(activity)
         activityCreatedListeners.forEach {
             it.onActivityCreated(activity)
         }
@@ -95,12 +100,22 @@ object ActivityProvider {
         }
     }
 
-    internal var _currentActivity: WeakReference<Activity>? = null
+    private fun offerIfDiffer(newActivity: Activity){
+        val current = currentActivity
+        if(current == null || current != newActivity){
+            _currentActivity.offer(WeakReference(newActivity))
+        }
+    }
+
+    internal var _currentActivity = ConflatedBroadcastChannel<WeakReference<Activity>>()
+
+    val listenCurrentActivity : Flow<Activity> = _currentActivity.asFlow().mapNotNull { it.get() }
+    suspend fun activity() : Activity = listenCurrentActivity.first()
 
     @JvmStatic
     val currentActivity: Activity?
         get() {
-            return _currentActivity?.get()
+            return _currentActivity.valueOrNull?.get()
         }
 }
 

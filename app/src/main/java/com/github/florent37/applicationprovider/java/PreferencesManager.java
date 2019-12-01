@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.github.florent37.application.provider.ApplicationProvider;
+import com.github.florent37.applicationprovider.MySingleton;
 
 public class PreferencesManager {
 
@@ -13,6 +14,8 @@ public class PreferencesManager {
     private SharedPreferences sharedPreferences;
 
     private PreferencesManager() {
+        final MySingleton mySingleton = new MySingleton();
+
         final Application application = ApplicationProvider.getApplication();
         this.sharedPreferences = application.getSharedPreferences("prefs", Context.MODE_PRIVATE);
     }

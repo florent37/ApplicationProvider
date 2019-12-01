@@ -79,3 +79,5 @@ class MainActivity : AppCompatActivity() {
     }
 }
 ```
+
+## Access current activity

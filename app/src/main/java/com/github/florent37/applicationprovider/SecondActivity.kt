@@ -1,6 +1,5 @@
 package com.github.florent37.applicationprovider
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.github.florent37.application.provider.ActivityProvider
@@ -14,22 +13,13 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class MainActivity : AppCompatActivity(), CoroutineScope by MainScope() {
-
-    init {
-        InitializeStetho
-        InitializeDagger
-    }
-
-    private var preferencesManager = PreferencesManager.getInstance()
+class SecondActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        textView.setOnClickListener {
-            startActivity(Intent(this, SecondActivity::class.java))
-        }
+        textView.text = "second activity"
     }
 
     override fun onDestroy() {
