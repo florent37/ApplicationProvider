@@ -11,7 +11,37 @@ val application = ApplicationProvider.application
 # Retrieve the current activity from anywhere
 ```kotlin
 //from anywhere
-val currentActivity = ActivityProvider.currentActivity
+val currentActivity : Activity? = ActivityProvider.currentActivity()
+```
+
+Or safety from a kotlin coroutine context : 
+
+```kotlin
+launch {
+    val currentActivity = ActivityProvider.activity() //cannot be null
+    Log.d(TAG, "activity : $currentActivity")
+}
+```
+
+# Providers
+
+If you need to execute a code automatically when the application starts, without adding it into your application's class code
+
+Create a class that extends `Provider`
+```kotlin
+class StethoProvider : Provider() {
+    override fun provide() {
+        val application = ApplicationProvider.application //if you need the application context
+        Stetho.initializeWithDefaults(application)
+    }
+}
+```
+
+Add it into your manifest
+```xml
+<provider
+     android:name=".StethoProvider"
+     android:authorities="${applicationId}.StethoInitializer" />
 ```
 
 # Download
@@ -25,7 +55,7 @@ dependencies {
 }
 ```
 
-# Initialize classes that needs a context
+# Initializers
 
 You do not need to override the Application now
 
@@ -46,15 +76,6 @@ class MyApplication : Application() {
 *Note that you can include it directly on your library's aar*
 
 ```kotlin
-class StethoInitializer : Provider() {
-    override fun provide() {
-        val application = ApplicationProvider.application
-        Stetho.initializeWithDefaults(application)
-    }
-}
-
-//or with an ProviderInitializer :
-
 class StethoInitializer : ProviderInitializer() {
     override fun initialize(): (Application) -> Unit = {
         Stetho.initializeWithDefaults(application)
@@ -99,14 +120,6 @@ Access current activity from anywhere using
 val currentActivity : Activity? = ActivityProvider.currentActivity()
 ```
 
-Or safety from a kotlin coroutine context : 
-
-```kotlin
-launch {
-    val currentActivity = ActivityProvider.activity() //cannot be null
-    Log.d(TAG, "activity : $currentActivity")
-}
-```
 
 ## Listen for current activity
 
