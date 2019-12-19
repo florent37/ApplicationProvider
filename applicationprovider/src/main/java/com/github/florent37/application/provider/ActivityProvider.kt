@@ -280,11 +280,11 @@ object ActivityProvider {
                 val currentState = it.state
 
                 if (currentState == ActivityState.PAUSE) {
-                    currentLookingActivity = currentState.name
+                    currentLookingActivity = it.name
                     lastStates.clear() //starts the listening
                 }
 
-                if(currentLookingActivity == currentState.name) {
+                if(currentLookingActivity == it.name) {
                     lastStates.add(currentState)
                 }
 
