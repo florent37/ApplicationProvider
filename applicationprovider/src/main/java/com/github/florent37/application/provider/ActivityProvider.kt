@@ -4,10 +4,8 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -28,50 +26,80 @@ interface ActivityDestroyedListener {
     fun onActivityDestroyed(activity: Activity)
 }
 
+interface ActivityStoppedListener {
+    fun onActivityStopped(activity: Activity)
+}
+
+interface ActivityStartedListener {
+    fun onActivityStarted(activity: Activity)
+}
+
 object ActivityProvider {
     private val activityCreatedListeners = ConcurrentLinkedQueue<ActivityCreatedListener>()
     private val activityResumedListeners = ConcurrentLinkedQueue<ActivityResumedListener>()
     private val activityPausedListeners = ConcurrentLinkedQueue<ActivityPausedListener>()
+    private val activityStoppedListeners = ConcurrentLinkedQueue<ActivityStoppedListener>()
+    private val activityStartedListeners = ConcurrentLinkedQueue<ActivityStartedListener>()
     private val activityDestroyedListeners = ConcurrentLinkedQueue<ActivityDestroyedListener>()
 
     @JvmStatic
-    fun addListen(listener: ActivityCreatedListener) {
+    fun addCreatedListener(listener: ActivityCreatedListener) {
         activityCreatedListeners.add(listener)
     }
 
     @JvmStatic
-    fun removeListener(listener: ActivityCreatedListener) {
+    fun removeCreatedListener(listener: ActivityCreatedListener) {
         activityCreatedListeners.remove(listener)
     }
 
     @JvmStatic
-    fun addListen(listener: ActivityResumedListener) {
+    fun addResumedListener(listener: ActivityResumedListener) {
         activityResumedListeners.add(listener)
     }
 
     @JvmStatic
-    fun removeListener(listener: ActivityResumedListener) {
+    fun removeResumedListener(listener: ActivityResumedListener) {
         activityResumedListeners.remove(listener)
     }
 
     @JvmStatic
-    fun addListen(listener: ActivityPausedListener) {
+    fun addPausedListener(listener: ActivityPausedListener) {
         activityPausedListeners.add(listener)
     }
 
     @JvmStatic
-    fun removeListener(listener: ActivityPausedListener) {
+    fun removePausedListener(listener: ActivityPausedListener) {
         activityPausedListeners.remove(listener)
     }
 
     @JvmStatic
-    fun addListen(listener: ActivityDestroyedListener) {
+    fun addDestroyedListener(listener: ActivityDestroyedListener) {
         activityDestroyedListeners.add(listener)
     }
 
     @JvmStatic
-    fun removeListener(listener: ActivityDestroyedListener) {
+    fun removeDestroyedListener(listener: ActivityDestroyedListener) {
         activityDestroyedListeners.remove(listener)
+    }
+
+    @JvmStatic
+    fun addStoppedListener(listener: ActivityStoppedListener) {
+        activityStoppedListeners.add(listener)
+    }
+
+    @JvmStatic
+    fun removeStoppedListener(listener: ActivityStoppedListener) {
+        activityStoppedListeners.remove(listener)
+    }
+
+    @JvmStatic
+    fun addStartedListener(listener: ActivityStartedListener) {
+        activityStartedListeners.add(listener)
+    }
+
+    @JvmStatic
+    fun removeStartedListener(listener: ActivityStartedListener) {
+        activityStartedListeners.remove(listener)
     }
 
     internal fun pingResumedListeners(activity: Activity) {
@@ -100,23 +128,101 @@ object ActivityProvider {
         }
     }
 
-    private fun offerIfDiffer(newActivity: Activity){
+    internal fun pingStartedListeners(activity: Activity) {
+        activityStartedListeners.forEach {
+            it.onActivityStarted(activity)
+        }
+    }
+
+    internal fun pingStoppedListeners(activity: Activity) {
+        activityStoppedListeners.forEach {
+            it.onActivityStopped(activity)
+        }
+    }
+
+    private fun offerIfDiffer(newActivity: Activity) {
         val current = currentActivity
-        if(current == null || current != newActivity){
+        if (current == null || current != newActivity) {
             _currentActivity.offer(WeakReference(newActivity))
         }
     }
 
     internal var _currentActivity = ConflatedBroadcastChannel<WeakReference<Activity>>()
 
-    val listenCurrentActivity : Flow<Activity> = _currentActivity.asFlow().mapNotNull { it.get() }
-    suspend fun activity() : Activity = listenCurrentActivity.first()
+    val listenCurrentActivity: Flow<Activity> = _currentActivity.asFlow().mapNotNull { it.get() }
+    suspend fun activity(): Activity = listenCurrentActivity.first()
 
     @JvmStatic
     val currentActivity: Activity?
         get() {
             return _currentActivity.valueOrNull?.get()
         }
+
+    fun listenCreated() = callbackFlow<Activity> {
+        val listener = object : ActivityCreatedListener { // implementation of some callback interface
+            override fun onActivityCreated(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addCreatedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removeCreatedListener(listener) }
+    }
+
+    fun listenStarted() = callbackFlow<Activity> {
+        val listener = object : ActivityStartedListener { // implementation of some callback interface
+            override fun onActivityStarted(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addStartedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removeStartedListener(listener) }
+    }
+
+    fun listenResumed() = callbackFlow<Activity> {
+        val listener = object : ActivityResumedListener { // implementation of some callback interface
+            override fun onActivityResumed(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addResumedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removeResumedListener(listener) }
+    }
+
+    fun listenDestroyed() = callbackFlow<Activity> {
+        val listener = object : ActivityDestroyedListener { // implementation of some callback interface
+            override fun onActivityDestroyed(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addDestroyedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removeDestroyedListener(listener) }
+    }
+
+    fun listenStopped() = callbackFlow<Activity> {
+        val listener = object : ActivityStoppedListener { // implementation of some callback interface
+            override fun onActivityStopped(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addStoppedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removeStoppedListener(listener) }
+    }
+
+    fun listenPaused() = callbackFlow<Activity> {
+        val listener = object : ActivityPausedListener { // implementation of some callback interface
+            override fun onActivityPaused(activity: Activity) {
+                offer(activity)
+            }
+        }
+        addPausedListener(listener)
+        // Suspend until either onCompleted or external cancellation are invoked
+        awaitClose { removePausedListener(listener) }
+    }
 }
 
 class LastActivityProvider : EmptyProvider() {
@@ -151,12 +257,18 @@ class LastActivityProvider : EmptyProvider() {
 
 
                 override fun onActivityStarted(activity: Activity?) {
+                    activity?.let {
+                        ActivityProvider.pingStartedListeners(activity)
+                    }
                 }
 
                 override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
                 }
 
                 override fun onActivityStopped(activity: Activity?) {
+                    activity?.let {
+                        ActivityProvider.pingStoppedListeners(activity)
+                    }
                 }
 
             })
