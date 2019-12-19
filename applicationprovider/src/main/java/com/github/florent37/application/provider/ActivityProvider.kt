@@ -274,15 +274,19 @@ object ActivityProvider {
     private fun _listenToOnBackPress() {
         GlobalScope.launch {
             val lastStates = mutableListOf<ActivityState>()
+            var currentLookingActivity : String? = null
 
             listenActivitiesState.collect {
                 val currentState = it.state
 
                 if (currentState == ActivityState.PAUSE) {
+                    currentLookingActivity = currentState.name
                     lastStates.clear() //starts the listening
                 }
 
-                lastStates.add(currentState)
+                if(currentLookingActivity == currentState.name) {
+                    lastStates.add(currentState)
+                }
 
                 if (currentState == ActivityState.DESTROY && lastStates == listOf(
                         ActivityState.PAUSE,
