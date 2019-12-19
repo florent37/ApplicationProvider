@@ -3,9 +3,11 @@ package com.github.florent37.application.provider
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -180,69 +182,109 @@ object ActivityProvider {
     val listenActivitiesState: Flow<ActivityAndState> = _activitiesState.asFlow()
 
     fun listenCreated() = callbackFlow<Activity> {
-        val listener = object : ActivityCreatedListener { // implementation of some callback interface
-            override fun onActivityCreated(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityCreatedListener { // implementation of some callback interface
+                override fun onActivityCreated(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addCreatedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removeCreatedListener(listener) }
     }
 
     fun listenStarted() = callbackFlow<Activity> {
-        val listener = object : ActivityStartedListener { // implementation of some callback interface
-            override fun onActivityStarted(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityStartedListener { // implementation of some callback interface
+                override fun onActivityStarted(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addStartedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removeStartedListener(listener) }
     }
 
     fun listenResumed() = callbackFlow<Activity> {
-        val listener = object : ActivityResumedListener { // implementation of some callback interface
-            override fun onActivityResumed(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityResumedListener { // implementation of some callback interface
+                override fun onActivityResumed(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addResumedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removeResumedListener(listener) }
     }
 
     fun listenDestroyed() = callbackFlow<Activity> {
-        val listener = object : ActivityDestroyedListener { // implementation of some callback interface
-            override fun onActivityDestroyed(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityDestroyedListener { // implementation of some callback interface
+                override fun onActivityDestroyed(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addDestroyedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removeDestroyedListener(listener) }
     }
 
     fun listenStopped() = callbackFlow<Activity> {
-        val listener = object : ActivityStoppedListener { // implementation of some callback interface
-            override fun onActivityStopped(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityStoppedListener { // implementation of some callback interface
+                override fun onActivityStopped(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addStoppedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removeStoppedListener(listener) }
     }
 
     fun listenPaused() = callbackFlow<Activity> {
-        val listener = object : ActivityPausedListener { // implementation of some callback interface
-            override fun onActivityPaused(activity: Activity) {
-                offer(activity)
+        val listener =
+            object : ActivityPausedListener { // implementation of some callback interface
+                override fun onActivityPaused(activity: Activity) {
+                    offer(activity)
+                }
             }
-        }
         addPausedListener(listener)
         // Suspend until either onCompleted or external cancellation are invoked
         awaitClose { removePausedListener(listener) }
+    }
+
+
+    internal val _onBackPress = ConflatedBroadcastChannel<Unit>()
+    val listenToOnBackPress: Flow<Unit> = _onBackPress.asFlow()
+
+    private fun _listenToOnBackPress() {
+        GlobalScope.launch {
+            val lastStates = mutableListOf<ActivityState>()
+
+            listenActivitiesState.collect {
+                val currentState = it.state
+
+                if (currentState == ActivityState.PAUSE) {
+                    lastStates.clear() //starts the listening
+                }
+
+                lastStates.add(currentState)
+
+                if (currentState == ActivityState.DESTROY && lastStates == listOf(
+                        ActivityState.PAUSE,
+                        ActivityState.STOP,
+                        ActivityState.DESTROY
+                    )
+                ) {
+                    //it's a backpress
+                    _onBackPress.offer(Unit)
+                }
+            }
+        }
+    }
+
+    init {
+        _listenToOnBackPress()
     }
 }
 
