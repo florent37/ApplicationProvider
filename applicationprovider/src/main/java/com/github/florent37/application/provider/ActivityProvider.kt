@@ -45,7 +45,17 @@ enum class ActivityState {
     DESTROY
 }
 
-data class ActivityAndState(val activity: Activity, val state: ActivityState)
+class ActivityAndState {
+    val name: String
+    val activity: WeakReference<Activity>
+    val state: ActivityState
+
+    constructor(activity: Activity, state: ActivityState) {
+        this.name = (activity as Any).toString() //the adress
+        this.activity = WeakReference(activity)
+        this.state = state
+    }
+}
 
 object ActivityProvider {
     private val activityCreatedListeners = ConcurrentLinkedQueue<ActivityCreatedListener>()
@@ -257,6 +267,9 @@ object ActivityProvider {
     internal val _onBackPress = ConflatedBroadcastChannel<Unit>()
     val listenToOnBackPress: Flow<Unit> = _onBackPress.asFlow()
 
+    /**
+     * A backpressed => OnPause => OnStop => OnDestroy (without any other state)
+     */
     private fun _listenToOnBackPress() {
         GlobalScope.launch {
             val lastStates = mutableListOf<ActivityState>()
