@@ -34,6 +34,17 @@ interface ActivityStartedListener {
     fun onActivityStarted(activity: Activity)
 }
 
+enum class ActivityState {
+    CREATE,
+    START,
+    RESUME,
+    PAUSE,
+    STOP,
+    DESTROY
+}
+
+data class ActivityAndState(val activity: Activity, val state: ActivityState)
+
 object ActivityProvider {
     private val activityCreatedListeners = ConcurrentLinkedQueue<ActivityCreatedListener>()
     private val activityResumedListeners = ConcurrentLinkedQueue<ActivityResumedListener>()
@@ -103,6 +114,7 @@ object ActivityProvider {
     }
 
     internal fun pingResumedListeners(activity: Activity) {
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.RESUME))
         offerIfDiffer(activity)
         activityResumedListeners.forEach {
             it.onActivityResumed(activity)
@@ -110,6 +122,7 @@ object ActivityProvider {
     }
 
     internal fun pingPausedListeners(activity: Activity) {
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.PAUSE))
         activityPausedListeners.forEach {
             it.onActivityPaused(activity)
         }
@@ -117,24 +130,28 @@ object ActivityProvider {
 
     internal fun pingCreatedListeners(activity: Activity) {
         offerIfDiffer(activity)
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.CREATE))
         activityCreatedListeners.forEach {
             it.onActivityCreated(activity)
         }
     }
 
     internal fun pingDestroyedListeners(activity: Activity) {
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.DESTROY))
         activityDestroyedListeners.forEach {
             it.onActivityDestroyed(activity)
         }
     }
 
     internal fun pingStartedListeners(activity: Activity) {
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.START))
         activityStartedListeners.forEach {
             it.onActivityStarted(activity)
         }
     }
 
     internal fun pingStoppedListeners(activity: Activity) {
+        _activitiesState.offer(ActivityAndState(activity, ActivityState.STOP))
         activityStoppedListeners.forEach {
             it.onActivityStopped(activity)
         }
@@ -147,7 +164,7 @@ object ActivityProvider {
         }
     }
 
-    internal var _currentActivity = ConflatedBroadcastChannel<WeakReference<Activity>>()
+    internal val _currentActivity = ConflatedBroadcastChannel<WeakReference<Activity>>()
 
     val listenCurrentActivity: Flow<Activity> = _currentActivity.asFlow().mapNotNull { it.get() }
     suspend fun activity(): Activity = listenCurrentActivity.first()
@@ -157,6 +174,10 @@ object ActivityProvider {
         get() {
             return _currentActivity.valueOrNull?.get()
         }
+
+
+    internal val _activitiesState = ConflatedBroadcastChannel<ActivityAndState>()
+    val listenActivitiesState: Flow<ActivityAndState> = _activitiesState.asFlow()
 
     fun listenCreated() = callbackFlow<Activity> {
         val listener = object : ActivityCreatedListener { // implementation of some callback interface
