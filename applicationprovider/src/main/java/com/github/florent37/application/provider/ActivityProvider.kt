@@ -3,6 +3,7 @@ package com.github.florent37.application.provider
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.awaitClose
@@ -295,6 +296,10 @@ object ActivityProvider {
             }
         }
     }
+
+    fun listenActivityChanged() = listenActivitiesState
+            .filter { it.state == ActivityState.RESUME }
+            .distinctUntilChangedBy { it.name }
 
     init {
         _listenToOnBackPress()
