@@ -274,25 +274,31 @@ object ActivityProvider {
     private fun _listenToOnBackPress() {
         GlobalScope.launch {
             val lastStates = mutableListOf<ActivityState>()
-            var currentLookingActivity : String? = null
+            var listeningTag: String? = null
 
             listenActivitiesState.collect {
                 val currentState = it.state
 
                 if (currentState == ActivityState.PAUSE) {
-                    currentLookingActivity = it.name
                     lastStates.clear() //starts the listening
+                    listeningTag = it.name
                 }
 
-                if(currentLookingActivity == it.name) {
+                if (currentState == ActivityState.CREATE) {
+                    lastStates.clear() //starts the listening
+                    listeningTag = null //if create -> not back pressed
+                }
+
+                if(listeningTag == it.name){
                     lastStates.add(currentState)
                 }
 
-                if (currentState == ActivityState.DESTROY && lastStates == listOf(
-                        ActivityState.PAUSE,
-                        ActivityState.STOP,
-                        ActivityState.DESTROY
-                    )
+                Log.d("ACTIVITY_PROVIDER", lastStates.toString())
+
+                if (currentState == ActivityState.DESTROY && listeningTag == it.name
+                    && lastStates.contains(ActivityState.DESTROY)
+                    && lastStates.contains(ActivityState.STOP)
+                    && lastStates.contains(ActivityState.PAUSE)
                 ) {
                     //it's a backpress
                     _onBackPress.offer(Unit)
