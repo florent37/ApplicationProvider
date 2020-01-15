@@ -3,12 +3,9 @@ package com.github.florent37.application.provider
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import android.util.Log
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -265,55 +262,9 @@ object ActivityProvider {
     }
 
 
-    internal val _onBackPress = ConflatedBroadcastChannel<Unit>()
-    val listenToOnBackPress: Flow<Unit> = _onBackPress.asFlow()
-
-    /**
-     * A backpressed => OnPause => OnStop => OnDestroy (without any other state)
-     */
-    private fun _listenToOnBackPress() {
-        GlobalScope.launch {
-            val lastStates = mutableListOf<ActivityState>()
-            var listeningTag: String? = null
-
-            listenActivitiesState.collect {
-                val currentState = it.state
-
-                if (currentState == ActivityState.PAUSE) {
-                    lastStates.clear() //starts the listening
-                    listeningTag = it.name
-                }
-
-                if (currentState == ActivityState.CREATE) {
-                    lastStates.clear() //starts the listening
-                    listeningTag = null //if create -> not back pressed
-                }
-
-                if(listeningTag == it.name){
-                    lastStates.add(currentState)
-                }
-
-                Log.d("ACTIVITY_PROVIDER", lastStates.toString())
-
-                if (currentState == ActivityState.DESTROY && listeningTag == it.name
-                    && lastStates.contains(ActivityState.DESTROY)
-                    && lastStates.contains(ActivityState.STOP)
-                    && lastStates.contains(ActivityState.PAUSE)
-                ) {
-                    //it's a backpress
-                    _onBackPress.offer(Unit)
-                }
-            }
-        }
-    }
-
     fun listenActivityChanged() = listenActivitiesState
             .filter { it.state == ActivityState.RESUME }
             .distinctUntilChangedBy { it.name }
-
-    init {
-        _listenToOnBackPress()
-    }
 }
 
 class LastActivityProvider : EmptyProvider() {
